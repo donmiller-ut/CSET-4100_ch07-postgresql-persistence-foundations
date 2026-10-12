@@ -8,7 +8,8 @@ Do not expose either service to the internet.
 ## Software
 
 Use JDK 25, VS Code with Java support, and a disposable PostgreSQL 18 installation
-with its `psql` client. Docker is an optional way to run the supplied database lab
+with its `psql` client. Local PostgreSQL is the default lecture and lab route.
+Docker is an optional way to run the supplied database lab
 without installing PostgreSQL locally. DBeaver and Bruno are optional clients.
 First builds need internet access for Maven dependencies. The wrapper supplies
 Maven 3.9.16, not Java. Confirm `java -version` and `./mvnw --version` both show 25.
@@ -35,10 +36,13 @@ They test HTTP behavior, not persistence. The appointment controller is test-onl
 
 ## PostgreSQL lab
 
-Follow [database/ch07/README.md](database/ch07/README.md) for either the local
-installation or isolated Docker route. Read the SQL before running it. Use a
+Follow Option A in [database/ch07/README.md](database/ch07/README.md) for the local
+installation. Docker is an optional alternative, not a prerequisite. Read the SQL before running it. Use a
 fresh disposable cluster, never a shared database. The bootstrap refuses repeated
-creation rather than silently changing existing roles.
+creation rather than silently changing existing roles. Check for existing Northstar
+roles and databases before bootstrap. Keep your local database after class; on
+repeat sessions inspect it instead of rerunning creation scripts. Use Bash (Git
+Bash on Windows) for the supplied verifier. Never use a shared server for this lab.
 
 Files used in the lecture:
 

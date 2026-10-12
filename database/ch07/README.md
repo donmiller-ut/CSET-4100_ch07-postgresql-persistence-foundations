@@ -5,19 +5,48 @@ course, shared, or production cluster. It creates named roles and a database and
 intentionally fails if those objects already exist. The API does not connect to
 this database yet. Allow time for installation and downloads before the lecture.
 
-## Option A: existing disposable PostgreSQL installation
+## Default: local PostgreSQL 18 with psql (Option A)
+
+Docker is not required. Install PostgreSQL 18, including its command-line tools,
+using the [official download page](https://www.postgresql.org/download/). Start the
+local service with your installer's service controls. Add its `bin` directory to
+PATH if `psql` is not found, then reopen your terminal. Installing the client alone
+does not start a database server. Installation happens before the lecture.
+
+Use a course-reserved local instance. Know its host, port, administrator login,
+and password. The example uses port 5432 and administrator `postgres`; substitute
+your actual values throughout if different. Some installations use your operating
+system username as administrator. Never reset another account just to match this guide.
+
+For the Bash verifier, use Bash on macOS/Linux or Git Bash on Windows. PostgreSQL's
+bin directory must be on that shell's PATH too. PowerShell can run psql and Maven,
+but cannot interpret the supplied `.sh` verifier directly.
 
 From the project root, confirm `psql --version`, then connect using your course's
 administrator identity and actual host/port:
 
 ```bash
-psql --host=localhost --port=5432 --username=postgres --dbname=postgres
+psql -X --host=127.0.0.1 --port=5432 --username=postgres --dbname=postgres
 ```
 
 At the `psql` prompt:
 
 ```sql
-SELECT version(), current_user, current_database();
+SELECT version(), current_user, current_database(), inet_server_addr(), inet_server_port();
+SELECT datname FROM pg_database WHERE datname = 'northstar_market';
+SELECT rolname FROM pg_roles
+WHERE rolname IN ('northstar_owner','northstar_migrator','northstar_app');
+```
+
+Confirm the intended local server is PostgreSQL 18. Both object-name queries must
+return zero rows before first-time bootstrap. If either finds existing work, stop
+and ask the instructor to identify it. Do not drop it or replace its passwords.
+Roles are cluster-wide, so another database name alone does not avoid role conflicts.
+For your own already initialized lab, skip bootstrap and V1 and reconnect to inspect it.
+
+Only after those checks, run each line separately:
+
+```sql
 \i database/ch07/admin-bootstrap.sql
 \password northstar_migrator
 \password northstar_app
@@ -29,7 +58,15 @@ copy them into SQL or URLs. Adapt the administrator username if your installatio
 uses a different one. Authentication must be configured by the course environment.
 Do not weaken authentication rules to get past a failed connection.
 
-## Option B: isolated Docker lab
+Before class, try the runtime connection below with `-W` and an intentionally
+incorrect password. The server must reject it. Then try the correct password.
+`-W` requests a prompt but does not enforce server authentication. If the wrong
+password succeeds, have the instructor correct the local TCP authentication rules;
+do not weaken them to `trust`. Keep development credentials out of recordings.
+
+Continue at **Apply the reviewed proposal**. Skip Option B for the local route.
+
+## Optional alternative: isolated Docker lab (Option B)
 
 Docker must be running. This route publishes no port and disables the container's
 external network. Use its bundled `psql`; DBeaver cannot connect to this isolated
@@ -163,6 +200,18 @@ Expect approved row operations, `ROLLBACK`, and 11 expected SQLSTATE rejections.
 A connection failure is an error, not proof that a constraint worked. Verification
 leaves no rows, but identity sequence values may advance. On a clean lab,
 `SELECT count(*) FROM northstar.product;` should return zero afterward.
+
+### Local route: keep the database
+
+Exit psql with `\q`, unset `PGPASSWORD` in any shell where you set it, and close
+temporary terminals. Keep the database and roles for later inspection. Do not
+drop objects or delete data directories as routine cleanup. PostgreSQL can remain
+running; if you stop your dedicated service using its service controls, stored
+data remains. Do not stop a shared service. Reconnect next time without rerunning
+bootstrap or V1. Ask the instructor for a separate fresh instance if you need to
+repeat schema creation; never reset unknown existing work.
+
+### Docker alternative only
 
 Exit the container shell, confirm this is your disposable lab, then remove only
 that named container:
